@@ -9,9 +9,12 @@
 #include <Wire.h>
 #include <MsTimer2.h>
 #include "AccSensor.h"
+#include "SonarSensor.h"
 
 AccSensor *accSensor;
 AccSensorMeasureData measuredData;
+SonarSensor *sonarSensor;
+
 const int MPU = 0x68; // GY-521 väyläosoite
 
 // Muuttujamäärittelyt. Huomaa, että desimaalierotin on piste!
@@ -45,19 +48,6 @@ float vxyzFilterRad = 30.0;
 unsigned long prevTime = 0;
 float smoothedCalibrationVar = 0.0;
 int SisaanTunniste = 0;
-int indeksi = 0;
-
-// Määritellään kytkentänavat ultraäänitutkalle HC-SR04
-const int GNDPin = 11; // ultraäänianturin maa-napa
-const int echoPin = 10; // Echo Pin (kaiku, eli vastaanotinpuoli)
-const int trigPin = 9; // Trigger Pin (ultraääni-lähtetin)
-const int VccPin = 8; // Anturin käyttöjännite
-
-float maximumRange = 100.0; // Maksimietäisyys (cm) jota tällä on tarkoitus mitata; pidempääkin voit kokeilla
-float minimumRange = 0.0; // Minimietäisyys (cm). Lyhyellä etäisyydellä sivusuuntainen kulkumatka tulee merkittäväksi
-unsigned long duration = 0; // Lähetetyn uä-pulssin kulkuaika mikrosekunteina
-float distance = 0.0; // Äänen kulkuaika kohteeseen ja takaisin; etäisyys (dm)
-float smoothedDistance = 0.0; // Filtteröidään etäisyyttä energialaskuria varten
 
 // Toistolaskurin muuttujat
 const int YLARAJA = 40; // cm
@@ -86,27 +76,26 @@ float deltaDistance = 0.0; // Edellisen ohjelmakierron ja nykyisen ohjelmakierro
 // Keskeytys vie tänne
 void flash()
 {
-  interruptCounter++;
-  smoothedDistance = smoothedDistance * 0.95 + distance * 0.05;
-
-  if (deltaDistance >= 0 && smoothedMuutosnopeus > 5) // Jos muutos on positiivinen, niin painoa nostetaan
-  {
-    energialaskuri += PUNTIN_MASSA * PAINOVOIMA * (deltaDistance / 100.0); // Lasketaan ylöspäin nousevan liikkeen kuluttama energia
-  }
-  if (deltaDistance < 0 && smoothedMuutosnopeus < -5) // Jos muutos on negatiivinen, niin painoa lasketaan
-  {
-    energialaskuri += PUNTIN_MASSA * PAINOVOIMA * (deltaDistance / 100.0 * -1) * ALASLASKUN_TYOKERROIN; // Lasketaan alaspäin laskevan liikkeen kuluttama energia
-  }
-
-  // Ehto joka toteutuu joka kymmenes kerta kun keskeytys ajetaan
-  if (interruptCounter >= 10)
-  {
-    interruptCounter = 0;
-    deltaDistance = smoothedDistance - prevDistance; // Lasketaan etäisyyden muutos
-    prevDistance = smoothedDistance; // Tallennetaan vanha etäisyys muistiin ennenkuin luetaan uusi arvo
-    muutosnopeus = (deltaDistance) / (naytevali_ts / (1000.0 / 10.0));
-    smoothedMuutosnopeus = smoothedMuutosnopeus * 0.80 + muutosnopeus * 0.20;
-  }
+//  interruptCounter++;
+//
+//  if (deltaDistance >= 0 && smoothedMuutosnopeus > 5) // Jos muutos on positiivinen, niin painoa nostetaan
+//  {
+//    energialaskuri += PUNTIN_MASSA * PAINOVOIMA * (deltaDistance / 100.0); // Lasketaan ylöspäin nousevan liikkeen kuluttama energia
+//  }
+//  if (deltaDistance < 0 && smoothedMuutosnopeus < -5) // Jos muutos on negatiivinen, niin painoa lasketaan
+//  {
+//    energialaskuri += PUNTIN_MASSA * PAINOVOIMA * (deltaDistance / 100.0 * -1) * ALASLASKUN_TYOKERROIN; // Lasketaan alaspäin laskevan liikkeen kuluttama energia
+//  }
+//
+//  // Ehto joka toteutuu joka kymmenes kerta kun keskeytys ajetaan
+//  if (interruptCounter >= 10)
+//  {
+//    interruptCounter = 0;
+//    deltaDistance = smoothedDistance - prevDistance; // Lasketaan etäisyyden muutos
+//    prevDistance = smoothedDistance; // Tallennetaan vanha etäisyys muistiin ennenkuin luetaan uusi arvo
+//    muutosnopeus = (deltaDistance) / (naytevali_ts / (1000.0 / 10.0));
+//    smoothedMuutosnopeus = smoothedMuutosnopeus * 0.80 + muutosnopeus * 0.20;
+//  }
 }
 
 void setup() {
@@ -119,17 +108,14 @@ void setup() {
   accSensor->init(4, 0, 0);
   accSensor->calibrateAcc(0.0006, -0.4275, 0.0006, 0.0390, 0.0006, -0.2623);//
 
-  // Ultraäänianturin napojen määrittely:
-  pinMode(GNDPin, OUTPUT); // Maadoitus; tämäkin on output-napa joka antaa 0V:n jännitteen
-  pinMode(echoPin, INPUT);
-  pinMode(trigPin, OUTPUT);
-  pinMode(VccPin, OUTPUT); // Käyttöjännite
+  int gndPin = 11;
+  int echoPin = 10;
+  int trigPin = 9;
+  int vccPin = 8;
+  float maxDistance = 100.0;
+  float minDistance = 0.0;
 
-  // Asetetaan syöttöjännite (5V UNO-BOARDILLA, 3.3V Genuino 101:llä) ja maa-arvot (0V):
-  digitalWrite(VccPin, HIGH);
-  delayMicroseconds(2);
-  digitalWrite(GNDPin, LOW);
-  delayMicroseconds(2);
+  sonarSensor = new SonarSensor(gndPin, echoPin, trigPin, vccPin, maxDistance, minDistance);
 
   Serial.begin (19200); // Tämä täytyy valita myös Serial Monitorista samaksi
   while (Serial.available() != 0)
@@ -157,14 +143,7 @@ void loop() {
   accSensor->measure();
   measuredData = accSensor->getMeasurements();
 
-  // trigPin/echoPin kierros määrittää etäisyyden kohteeseen, josta lähtenyt äänipulssi heijastuu takaisin
-  //  digitalWrite(trigPin, LOW);
-  //  delayMicroseconds(2);
-  //  digitalWrite(trigPin, HIGH);
-  //  delayMicroseconds(10);
-  //  digitalWrite(trigPin, LOW);
-  //
-  //  duration = pulseIn(echoPin, HIGH); // Äänen kulkuaika mikrosekunteina saadaan kaiusta
+
 
   // Aikaleima (ms)
   prevTime = aika;
@@ -194,32 +173,25 @@ void loop() {
   //  vxyz = sqrt(vxPlot * vxPlot + vyPlot * vyPlot + vzPlot * vzPlot);
   //  vxyzPlot = vxyz;
 
-
-  //Lasketaan etäisyys (cm) perustuen äänen nopeuteen ilmassa.
-  //Voit selvittää fysiikasta mistä jakaja tulee... "etäisyysLaskelma.xlsx"
-  distance = duration / 58.3;
-
-  if (distance >= maximumRange || distance <= minimumRange) distance = -1;
-
   // Toisto- ja energialaskurin toimintalogiikka
 
   // Ylärajan yläpuolella laitetaan ylhäällä-tila aktiiviseksi, ja alarajan alapuolella deaktivoidaan.
-  if (!ylhaalla && distance >= YLARAJA) {
-    toistomaara++; // Lisätään toistojen määrää yhdellä
-    maxDistance = YLARAJA; // Asetetaan maksimietäisyyden lähtöarvoksi ylaraja kun siirrytään ylhäällä tilaan.
-    ylhaalla = true;
-  }
-
-  if (ylhaalla && distance <= ALARAJA) {
-    minDistance = ALARAJA; // Asetetaan minimietäisyyden lähtöarvoksi alaraja kun siirrytään alhaalla tilaan.
-    ylhaalla = false;
-  }
-
-  // Tallenna maksimiarvoa etäisyydestä kun ollaan ylhaalla
-  if (ylhaalla && distance > maxDistance) maxDistance = distance;
-
-  // Tallenna minimiarvoa etäisyydestä kun ollaan alhaalla (ylhaalla tila deaktiivinen)
-  if (!ylhaalla && distance < minDistance) minDistance = distance;
+//  if (!ylhaalla && distance >= YLARAJA) {
+//    toistomaara++; // Lisätään toistojen määrää yhdellä
+//    maxDistance = YLARAJA; // Asetetaan maksimietäisyyden lähtöarvoksi ylaraja kun siirrytään ylhäällä tilaan.
+//    ylhaalla = true;
+//  }
+//
+//  if (ylhaalla && distance <= ALARAJA) {
+//    minDistance = ALARAJA; // Asetetaan minimietäisyyden lähtöarvoksi alaraja kun siirrytään alhaalla tilaan.
+//    ylhaalla = false;
+//  }
+//
+//  // Tallenna maksimiarvoa etäisyydestä kun ollaan ylhaalla
+//  if (ylhaalla && distance > maxDistance) maxDistance = distance;
+//
+//  // Tallenna minimiarvoa etäisyydestä kun ollaan alhaalla (ylhaalla tila deaktiivinen)
+//  if (!ylhaalla && distance < minDistance) minDistance = distance;
 
   // Lasketaan monta snickersiä on palanut
   kulutettuEnergiaKcal = energialaskuri / 4.1868 / 1000.0;
@@ -263,21 +235,21 @@ void printSerialPlotter() {
   //  Serial.print("etäisyys:");
   //  Serial.print(distance); Serial.print(" ");
   //
-//  Serial.print("ax:");
-//  Serial.print(measuredData.axCalibrated); Serial.print(" ");
-//  Serial.print("ay:");
-//  Serial.print(measuredData.ayCalibrated); Serial.print(" ");
-//  Serial.print("az:");
-//  Serial.print(measuredData.azCalibrated); Serial.print(" ");
-//  Serial.print("gx:");
-//  Serial.print(measuredData.gxCalibrated); Serial.print(" ");
-//  Serial.print("gy:");
-//  Serial.print(measuredData.gyCalibrated); Serial.print(" ");
-//  Serial.print("gz:");
-//  Serial.print(measuredData.gzCalibrated); Serial.print(" ");
+  //  Serial.print("ax:");
+  //  Serial.print(measuredData.axCalibrated); Serial.print(" ");
+  //  Serial.print("ay:");
+  //  Serial.print(measuredData.ayCalibrated); Serial.print(" ");
+  //  Serial.print("az:");
+  //  Serial.print(measuredData.azCalibrated); Serial.print(" ");
+  //  Serial.print("gx:");
+  //  Serial.print(measuredData.gxCalibrated); Serial.print(" ");
+  //  Serial.print("gy:");
+  //  Serial.print(measuredData.gyCalibrated); Serial.print(" ");
+  //  Serial.print("gz:");
+  //  Serial.print(measuredData.gzCalibrated); Serial.print(" ");
   Serial.print("temp:");
   Serial.print(measuredData.tempCalibrated); Serial.print(" ");
-  
+
   //Serial.print(" "); // Printataan kuvaajalle ylä- ja alaraja -20 - 20, jotta kuvaaja ei zoomaile itsestään.
   //Serial.print(-20);
   //Serial.print(" ");
@@ -288,7 +260,7 @@ void printSerialPlotter() {
 void printSerialMonitor() {
   Serial.print(aika);
   Serial.print(";");
-  Serial.print(distance);
+  //Serial.print(distance);
   Serial.print(";");
   Serial.print(ax);
   Serial.print(";");
