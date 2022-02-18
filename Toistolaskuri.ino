@@ -130,9 +130,7 @@ void setup() {
 }
 
 void loop() {
-
-
-
+  
   // eka sisäänmenolla annetaan 1ms aikaa käynnistyä. Muuten 1. arvo on pelkkää häiriötä.
   if (SisaanTunniste == 0)
   {

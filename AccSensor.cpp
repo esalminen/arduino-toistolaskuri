@@ -22,7 +22,7 @@ void AccSensor::calibrateAcc(float xa, float xb, float ya, float yb, float za, f
   _ya = ya;
   _yb = yb;
   _za = za;
-  _zb = zb;  
+  _zb = zb;
 }
 
 void AccSensor::init(byte filterConfig, byte gyroConfig, byte accConfig)
@@ -38,19 +38,19 @@ void AccSensor::init(byte filterConfig, byte gyroConfig, byte accConfig)
   Wire.beginTransmission(_address);
   Wire.write(0x1A);
   Wire.write(filterConfig);
-  Wire.endTransmission(false);  
+  Wire.endTransmission(false);
 
   // Gyro configuration in register 0x1B
   Wire.beginTransmission(_address);
   Wire.write(0x1B);
   Wire.write(gyroConfig << 3);
-  Wire.endTransmission(false); 
+  Wire.endTransmission(false);
 
   // Acc configuration in register 0x1C
   Wire.beginTransmission(_address);
   Wire.write(0x1C);
   Wire.write(accConfig << 3);
-  Wire.endTransmission(true); 
+  Wire.endTransmission(true);
 }
 
 void AccSensor::measure()
@@ -60,13 +60,13 @@ void AccSensor::measure()
   Wire.endTransmission(false);
   Wire.requestFrom(_address, 14, true);
 
-  _acx = Wire.read() <<8 | Wire.read();
-  _acy = Wire.read() <<8 | Wire.read();
-  _acz = Wire.read() <<8 | Wire.read();
-  _temp = Wire.read() <<8 | Wire.read();
-  _gyx = Wire.read() <<8 | Wire.read();
-  _gyy = Wire.read() <<8 | Wire.read();
-  _gyz = Wire.read() <<8 | Wire.read(); 
+  _acx = Wire.read() << 8 | Wire.read();
+  _acy = Wire.read() << 8 | Wire.read();
+  _acz = Wire.read() << 8 | Wire.read();
+  _temp = Wire.read() << 8 | Wire.read();
+  _gyx = Wire.read() << 8 | Wire.read();
+  _gyy = Wire.read() << 8 | Wire.read();
+  _gyz = Wire.read() << 8 | Wire.read();
 
   _measureData.axRaw = _acx;
   _measureData.ayRaw = _acy;
@@ -74,7 +74,7 @@ void AccSensor::measure()
   _measureData.axCalibrated = _xa * _acx + _xb;
   _measureData.ayCalibrated = _ya * _acy + _yb;
   _measureData.azCalibrated = _za * _acz + _zb;
-  
+
   _measureData.gxRaw = _gyx;
   _measureData.gyRaw = _gyy;
   _measureData.gzRaw = _gyz;
@@ -82,17 +82,15 @@ void AccSensor::measure()
   _measureData.gyCalibrated = _gyy * 1.0;
   _measureData.gzCalibrated = _gyz * 1.0;
 
-  /*   //temperature calculation
+  /*temperature calculation
     tx = Tmp + tcal;
     t = tx/340 + 36.53; //equation for temperature in degrees C from datasheet
-    tf = (t * 9/5) + 32; //fahrenheit*/  
+    tf = (t * 9/5) + 32; //fahrenheit*/
   _measureData.tempRaw = _temp;
   _measureData.tempCalibrated = _temp / 340.0 + 36.53;  // equation for temperature in °C
-//  Serial.println(_measureData.tempRaw);
-//  Serial.println(_measureData.tempCalibrated);
 }
 
 AccSensorMeasureData AccSensor::getMeasurements()
 {
-  return _measureData;  
+  return _measureData;
 }
