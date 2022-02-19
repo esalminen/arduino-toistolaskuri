@@ -21,6 +21,12 @@ SonarSensor::SonarSensor(int gndPin, int echoPin, int trigPin, int vccPin, float
 
 void SonarSensor::init()
 {
+  // Define pins
+  pinMode(_gndPin, OUTPUT);
+  pinMode(_echoPin, INPUT);
+  pinMode(_trigPin, OUTPUT);
+  pinMode(_vccPin, OUTPUT);
+  
   // Set supplyvoltage levels
   digitalWrite(_vccPin, HIGH);
   delayMicroseconds(2);

@@ -26,11 +26,19 @@ class Filter {
       _outputValue = _outputValue + _filterFreqRad * cycleInterval * (value - _outputValue);
     }
 
+    void setOutput(float value)
+    {
+      _outputValue = value;  
+    }
+
     float getOutput()
     {
       return _outputValue;
     }
 };
+
+// Common program variables
+bool firstProgramCycle = true;
 
 // Time variables
 unsigned long currentTime = 0;
@@ -72,7 +80,7 @@ volatile float filteredDistance = 0;
 
 void setup() {
 
-  filterDistance = new Filter(10.0);
+  filterDistance = new Filter(0.25);
 
   workCounter = new WorkCounter(highLimit, lowLimit, mass, gravity, downwardMotionCoef);
 
@@ -83,7 +91,7 @@ void setup() {
   sonarSensor = new SonarSensor(gndPin, echoPin, trigPin, vccPin, maxDistance, minDistance);
   sonarSensor->init();
 
-  MsTimer2::set(100, interrupt);
+  MsTimer2::set(10, interrupt);
   MsTimer2::start();
 
   Serial.begin (19200);
@@ -95,7 +103,7 @@ void setup() {
 
 void interrupt()
 {
-  filterDistance->setInput(distance, 0.100);
+  filterDistance->setInput(distance, 0.5);
   filteredDistance = filterDistance->getOutput();
 }
 
@@ -113,12 +121,13 @@ void loop() {
   // Measure distance
   sonarSensor->measure();
   distance = sonarSensor->getMeasurement();
+  if(firstProgramCycle) filterDistance->setOutput(distance);
 
   // Workcounter calc from distance. Calculated in interrupt protected atomic 
   // block so that interrupt cannot change filteredDistance while measure is called.
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
-    workCounter->measure(filteredDistance);
+    workCounter->measure(filteredDistance / 100.0);
   }
 
 
@@ -145,26 +154,6 @@ void loop() {
   //  vxyz = sqrt(vxPlot * vxPlot + vyPlot * vyPlot + vzPlot * vzPlot);
   //  vxyzPlot = vxyz;
 
-  // Toisto- ja energialaskurin toimintalogiikka
-
-  // Ylärajan yläpuolella laitetaan ylhäällä-tila aktiiviseksi, ja alarajan alapuolella deaktivoidaan.
-  //  if (!ylhaalla && distance >= YLARAJA) {
-  //    toistomaara++; // Lisätään toistojen määrää yhdellä
-  //    maxDistance = YLARAJA; // Asetetaan maksimietäisyyden lähtöarvoksi ylaraja kun siirrytään ylhäällä tilaan.
-  //    ylhaalla = true;
-  //  }
-  //
-  //  if (ylhaalla && distance <= ALARAJA) {
-  //    minDistance = ALARAJA; // Asetetaan minimietäisyyden lähtöarvoksi alaraja kun siirrytään alhaalla tilaan.
-  //    ylhaalla = false;
-  //  }
-  //
-  //  // Tallenna maksimiarvoa etäisyydestä kun ollaan ylhaalla
-  //  if (ylhaalla && distance > maxDistance) maxDistance = distance;
-  //
-  //  // Tallenna minimiarvoa etäisyydestä kun ollaan alhaalla (ylhaalla tila deaktiivinen)
-  //  if (!ylhaalla && distance < minDistance) minDistance = distance;
-
   // Lasketaan monta snickersiä on palanut
   //  kulutettuEnergiaKcal = energialaskuri / 4.1868 / 1000.0;
   //  kulutetutSnickersit = (kulutettuEnergiaKcal / KEHON_HYOTYSUHDE) / SNICKERS_ENERGIA;
@@ -179,6 +168,7 @@ void loop() {
   // Jos mittaa hirmuisen nopeasti niin numerinen derivaatta näyttää kohinaisemmalta
   // vaikka siinä toki olisi tietoa enemmän!
   delay(2);
+  firstProgramCycle = false;
 }
 
 
@@ -195,18 +185,20 @@ void printSerialPlotter() {
   //  Serial.print(minDistance); Serial.print(" ");
   //  Serial.print("max[cm]:");
   //  Serial.print(maxDistance); Serial.print(" ");
-  //  Serial.print("toistomäärä[kpl]:");
-  //  Serial.print(toistomaara); Serial.print(" ");
+    Serial.print("toistomäärä[kpl]:");
+    Serial.print(workCounter->getCounterValue()*10); Serial.print(" ");
   //  Serial.print("muutosnopeus_ds/dt:");
   //  Serial.print(smoothedMuutosnopeus); Serial.print(" ");
-  //Serial.print("energialaskuri[J]:");
-  //Serial.print(energialaskuri); Serial.print(" ");
+  Serial.print("energialaskuri[J]:");
+  Serial.print(workCounter->getEnergyCounter()); Serial.print(" ");
   //  Serial.print("energia[kcal]:");
   //  Serial.print(kulutettuEnergiaKcal); Serial.print(" ");
   //  Serial.print("Snickersit:");
   //  Serial.print(kulutetutSnickersit); Serial.print(" ");
     Serial.print("etäisyys:");
     Serial.print(filteredDistance); Serial.print(" ");
+    Serial.print("etäisyys:");
+    Serial.print(distance); Serial.print(" ");
   //
   //  Serial.print("ax:");
   //  Serial.print(measuredData.axCalibrated); Serial.print(" ");

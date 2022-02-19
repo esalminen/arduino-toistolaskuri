@@ -9,6 +9,7 @@
 #include "Arduino.h"
 
 class WorkCounter {
+    float _prevDistance = 0;
     float _highLimit = 0;
     float _lowLimit = 0;
     float _mass = 0;
@@ -17,9 +18,24 @@ class WorkCounter {
     float _energyCounter = 0;
     int _workCounter = 0;
     bool _upState = false;
+    unsigned long _prevTime = 0;
   public:
     WorkCounter(float highLimit, float lowLimit, float mass, float gravity, float downMotionCoef);
-    void measure(float value);
+    /**
+     * Measure work counts
+     * @param distance  distance from sensor in cm
+     */
+    void measure(float distance);
+
+    /**
+     * Get work counter current value
+     * @param return  work counter value
+     */
     int getCounterValue();
+
+    /**
+     * Get used energy counter value
+     * @param return used energy counter value
+     */
     float getEnergyCounter();
 };

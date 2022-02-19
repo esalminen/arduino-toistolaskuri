@@ -18,9 +18,39 @@ WorkCounter::WorkCounter(float highLimit, float lowLimit, float mass, float grav
   _downMotionCoef = downMotionCoef;
 }
 
-void WorkCounter::measure(float value)
+void WorkCounter::measure(float distance)
 {
+  float derivative = 0.0;
   
+  if (abs(distance - _prevDistance) > 0.02)
+  {
+    float deltaTime = (millis() - _prevTime) / 1000.0;
+    float deltaDistance = distance - _prevDistance;
+    float derivative = deltaDistance / deltaTime;
+    _prevTime = millis();
+    _prevDistance = distance;
+
+    if (derivative < 0)
+    {
+      _energyCounter += _mass * _gravity * abs(deltaDistance) * _downMotionCoef;
+    }
+    else if (derivative > 0)
+    {
+      _energyCounter += _mass * _gravity * deltaDistance;
+    }
+  }
+
+
+
+
+  if (!_upState && (distance) >= _highLimit) {
+    _workCounter++; // Lisätään toistojen määrää yhdellä
+    _upState = true;
+  }
+
+  if (_upState && (distance) <= _lowLimit) {
+    _upState = false;
+  }
 }
 
 int WorkCounter::getCounterValue()
