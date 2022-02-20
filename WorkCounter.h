@@ -22,20 +22,33 @@ class WorkCounter {
   public:
     WorkCounter(float highLimit, float lowLimit, float mass, float gravity, float downMotionCoef);
     /**
-     * Measure work counts
-     * @param distance  distance from sensor in cm
-     */
+       Measure work counts
+       @param distance  distance from sensor in cm
+    */
     void measure(float distance);
 
     /**
-     * Get work counter current value
-     * @param return  work counter value
-     */
+           Measure work counts
+           @param ax  x-axis acceleration from sensor
+           @param ay  y-axis -..-
+           @param az  z-axis -..-
+    */
+    void measure(float ax, float ay, float az);
+
+    /**
+       Get work counter current value
+       @param return  work counter value
+    */
     int getCounterValue();
 
     /**
-     * Get used energy counter value
-     * @param return used energy counter value
-     */
+       Get used energy counter value
+       @param return used energy counter value
+    */
     float getEnergyCounter();
+
+    /**
+      Prints measurement data to serial port with Serial.print() command
+    */
+    void printData();
 };

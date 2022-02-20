@@ -83,4 +83,9 @@ class AccSensor {
      * Get measured data as a struct
      */
     AccSensorMeasureData getMeasurements();
+    
+    /**
+     * Prints measurement data to serial port with Serial.print() command
+     */
+    void printData();
 };

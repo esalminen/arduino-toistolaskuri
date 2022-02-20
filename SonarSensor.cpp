@@ -51,3 +51,9 @@ float SonarSensor::getMeasurement()
 {
   return _distance;
 }
+
+void SonarSensor::printData()
+{
+  Serial.print("distance[cm]:");
+  Serial.print(_distance);Serial.print(" ");
+}

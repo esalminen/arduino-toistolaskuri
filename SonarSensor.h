@@ -18,7 +18,7 @@ class SonarSensor {
     float _distance = 0;
   public:
     SonarSensor(int gndPin, int echoPin, int trigPin, int vccPin, float maxDistance, float minDistance);
-    
+
     /**
       Initialize sensor
     */
@@ -34,4 +34,9 @@ class SonarSensor {
        @param return  Return distance as cm
     */
     float getMeasurement();
+    
+    /**
+      Prints measurement data to serial port with Serial.print() command
+    */
+    void printData();
 };

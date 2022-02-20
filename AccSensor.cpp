@@ -94,3 +94,13 @@ AccSensorMeasureData AccSensor::getMeasurements()
 {
   return _measureData;
 }
+
+void AccSensor::printData()
+{
+  Serial.print("axCalibrated[m/s^2]:");
+  Serial.print(_measureData.axCalibrated);Serial.print(" ");
+  Serial.print("ayCalibrated[m/s^2]:");
+  Serial.print(_measureData.ayCalibrated);Serial.print(" ");
+  Serial.print("azCalibrated[m/s^2]:"); 
+  Serial.print(_measureData.azCalibrated);Serial.print(" ");
+}
