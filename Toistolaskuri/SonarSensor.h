@@ -5,7 +5,8 @@
   @author Esa Salminen
   @version 1.0 18.2.2022
 */
-
+#ifndef SONARSENSOR_H
+#define SONARSENSOR_H
 #include "Arduino.h"
 
 class SonarSensor {
@@ -40,3 +41,4 @@ class SonarSensor {
     */
     void printData();
 };
+#endif

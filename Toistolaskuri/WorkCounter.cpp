@@ -50,32 +50,9 @@ void WorkCounter::measure(float distance)
   }
 }
 
-void WorkCounter::measure(float ax, float ay, float az) //TODO
+void WorkCounter::measure(float velocity, bool dummy)
 {
   
-
-  //  axAvg = axAvg + Ts * aFilterRad * ( ax - axAvg);
-  //  ayAvg = ayAvg + Ts * aFilterRad * ( ay - ayAvg);
-  //  azAvg = azAvg + Ts * aFilterRad * ( az - azAvg);
-  //
-  //  axPlot = ax - axAvg;
-  //  ayPlot = ay - ayAvg;
-  //  azPlot = az - azAvg;
-  //
-  //  vx = vx + ((aika - prevTime) / 1000.0) * axPlot;
-  //  vy = vy + ((aika - prevTime) / 1000.0) * ayPlot;
-  //  vz = vz + ((aika - prevTime) / 1000.0) * azPlot;
-  //
-  //  vxAvg = vxAvg + Ts * vFilterRad * ( vx - vxAvg);
-  //  vyAvg = vyAvg + Ts * vFilterRad * ( vy - vyAvg);
-  //  vzAvg = vzAvg + Ts * vFilterRad * ( vz - vzAvg);
-  //
-  //  vxPlot = vx - vxAvg;
-  //  vyPlot = vy - vyAvg;
-  //  vzPlot = vz - vzAvg;
-  //
-  //  vxyz = sqrt(vxPlot * vxPlot + vyPlot * vyPlot + vzPlot * vzPlot);
-  //  vxyzPlot = vxyz;
 }
 
 int WorkCounter::getCounterValue()

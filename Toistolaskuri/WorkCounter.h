@@ -5,7 +5,8 @@
   @author Esa Salminen
   @version 1.0 18.2.2022
 */
-
+#ifndef WORKCOUNTER_H
+#define WORKCOUNTER_H
 #include "Arduino.h"
 
 class WorkCounter {
@@ -29,11 +30,9 @@ class WorkCounter {
 
     /**
            Measure work counts
-           @param ax  x-axis acceleration from sensor
-           @param ay  y-axis -..-
-           @param az  z-axis -..-
+           @param velocity  velocity in m/s
     */
-    void measure(float ax, float ay, float az);
+    void measure(float velocity, bool dummy);
 
     /**
        Get work counter current value
@@ -52,3 +51,4 @@ class WorkCounter {
     */
     void printData();
 };
+#endif

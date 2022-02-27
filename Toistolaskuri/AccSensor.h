@@ -5,7 +5,8 @@
   @author Esa Salminen
   @version 1.0 18.2.2022
 */
-
+#ifndef ACCSENSOR_H
+#define ACCSENSOR_H
 #include "Arduino.h"
 
 struct AccSensorMeasureData {
@@ -15,9 +16,6 @@ struct AccSensorMeasureData {
   float axCalibrated;
   float ayCalibrated;
   float azCalibrated;
-  float axCalFilt;
-  float ayCalFilt;
-  float azCalFilt;
   int16_t gxRaw;
   int16_t gyRaw;
   int16_t gzRaw;
@@ -92,3 +90,4 @@ class AccSensor {
     */
     void printData();
 };
+#endif

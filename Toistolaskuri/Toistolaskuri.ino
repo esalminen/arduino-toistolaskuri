@@ -9,59 +9,19 @@
 #include <MsTimer2.h>
 #include <util/atomic.h>
 #include "AccSensor.h"
+#include "AccToSpeed.h"
 #include "SonarSensor.h"
 #include "WorkCounter.h"
+#include "Filter.h"
 
-class Filter {
-    float _filterFreqRad = 0;
-    float _outputValue = 0;
-  public:
 
-    /**
-        Filter constructor
-        @param filterFreqRad  Filtering frequency in rad. 2 * PI = 1 Hz
-        @param cycleInterval  Input signal read interval in seconds
-    */
-    Filter(float filterFreqRad)
-    {
-      _filterFreqRad = filterFreqRad;
-    }
-
-    /**
-      Set filter input signal
-      @param value          Input signal
-      @param cycleInterval  Input signal read interval in seconds
-    */
-    void setInput(float value, float cycleInterval)
-    {
-      _outputValue = _outputValue + _filterFreqRad * cycleInterval * (value - _outputValue);
-    }
-
-    /**
-      Set filter output signal. Used to make quick step change in filter output
-      @param value          Output signal
-    */
-    void setOutput(float value)
-    {
-      _outputValue = value;
-    }
-
-    /**
-      Set filter output signal. Used to make quick step change in filter output
-      @param return         Get filter curren output signal
-    */
-    float getOutput()
-    {
-      return _outputValue;
-    }
-};
 
 // Common program variables
 bool firstProgramCycle = true;
 
 // Time variables
 unsigned long currentTime = 0;
-int interruptInterval = 10; // [ms]
+int interruptInterval = 5; // [ms]
 
 // Sonar sensor parameters
 int gndPin = 11;
@@ -82,10 +42,12 @@ Filter *filterDistance;
 WorkCounter *workCounter;
 AccSensor *accSensor;
 AccSensorMeasureData measuredData;
+AccToSpeed *accToSpeed;
 SonarSensor *sonarSensor;
 float distance = 0;
 volatile float filteredDistance = 0;
-
+volatile float minVelocity = 0;
+volatile float maxVelocity = 0;
 void setup() {
 
   filterDistance = new Filter(2 * PI);
@@ -93,8 +55,10 @@ void setup() {
   workCounter = new WorkCounter(highLimit, lowLimit, mass, gravity, downwardMotionCoef);
 
   accSensor = new AccSensor(0x68);
-  accSensor->init(4, 0, 0);
+  accSensor->init(0, 0, 0);
   accSensor->calibrateAcc(0.0006, -0.4275, 0.0006, 0.0390, 0.0006, -0.2623); // calibrate sensor with equation coefficients
+
+  accToSpeed = new AccToSpeed(0.3, 0.6);
 
   sonarSensor = new SonarSensor(gndPin, echoPin, trigPin, vccPin, maxDistance, minDistance);
   sonarSensor->init();
@@ -113,6 +77,8 @@ void interrupt()
 {
   filterDistance->setInput(distance, interruptInterval / 1000.0);
   filteredDistance = filterDistance->getOutput();
+
+  accToSpeed->setInput(measuredData.axCalibrated, measuredData.ayCalibrated, measuredData.azCalibrated, interruptInterval / 1000.0);
 }
 
 void loop() {
@@ -125,7 +91,7 @@ void loop() {
   measuredData = accSensor->getMeasurements();
 
   // Measure distance
-  sonarSensor->measure();
+  //sonarSensor->measure();
 
   // Workcounter calc from distance. Calculated in interrupt protected atomic
   // block so that interrupt cannot change filteredDistance while measure is called.
@@ -134,6 +100,8 @@ void loop() {
     distance = sonarSensor->getMeasurement();
     if (firstProgramCycle) filterDistance->setOutput(distance);
     workCounter->measure(filteredDistance / 100.0);
+    minVelocity = accToSpeed->getOutputMin() * 10.0;
+    maxVelocity = accToSpeed->getOutputMax() * 10.0;
   }
 
   printSerialPlotter();
@@ -146,11 +114,17 @@ void loop() {
 
 void printSerialPlotter()
 {
-  Serial.print("distance[cm]:");
-  Serial.print(filteredDistance); Serial.print(" ");
+  //Serial.print("distance[cm]:");
+  //Serial.print(filteredDistance); Serial.print(" ");
   //sonarSensor->printData();
   //accSensor->printData();
-  workCounter->printData();
+//  Serial.print("minV[m/s]:");
+//  Serial.print(minVelocity); Serial.print(" ");
+//  Serial.print("maxV[m/s]:");
+//  Serial.print(maxVelocity); Serial.print(" ");
+  //accToSpeed->printAccData();
+  accToSpeed->printVelocityData();
+  //workCounter->printData();
   Serial.println();
 }
 
@@ -158,5 +132,9 @@ void printSerialMonitor()
 {
   Serial.print("time[ms]:");
   Serial.print(currentTime); Serial.print(" ");
+  Serial.print("distance[cm]:");
+  Serial.print(filteredDistance); Serial.print(" ");
+  sonarSensor->printData();
+  accSensor->printData();
   Serial.println();
 }
