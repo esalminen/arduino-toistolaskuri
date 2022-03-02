@@ -21,7 +21,7 @@ bool firstProgramCycle = true;
 
 // Time variables
 unsigned long currentTime = 0;
-int interruptInterval = 5; // [ms]
+int interruptInterval = 10; // [ms]
 
 // Sonar sensor parameters
 int gndPin = 11;
@@ -34,9 +34,12 @@ float minDistance = 0.0; // [cm]
 // Workcounter parameters
 float highLimit = 0.4; // [m]
 float lowLimit = 0.2; // [m]
+float highVelocityLimit = 0.5; // [m/s]
+float lowVelocityLimit = 0.2; // [m/s]
 float mass = 5.5; // [kg]
 float gravity = 9.81; // [m/s^2]
 float downwardMotionCoef = 0.6;
+int workCounterMode = 1; // 0 = distance mode, 1 = velocity mode
 
 Filter *filterDistance;
 WorkCounter *workCounter;
@@ -46,19 +49,21 @@ AccToSpeed *accToSpeed;
 SonarSensor *sonarSensor;
 float distance = 0;
 volatile float filteredDistance = 0;
-volatile float minVelocity = 0;
-volatile float maxVelocity = 0;
+
 void setup() {
 
   filterDistance = new Filter(2 * PI);
 
-  workCounter = new WorkCounter(highLimit, lowLimit, mass, gravity, downwardMotionCoef);
+  workCounter = new WorkCounter(highLimit, lowLimit, mass, gravity, downwardMotionCoef, highVelocityLimit, lowVelocityLimit);
 
   accSensor = new AccSensor(0x68);
   accSensor->init(0, 0, 0);
   accSensor->calibrateAcc(0.0006, -0.4275, 0.0006, 0.0390, 0.0006, -0.2623); // calibrate sensor with equation coefficients
+  accSensor->measure();
+  measuredData = accSensor->getMeasurements();
 
-  accToSpeed = new AccToSpeed(0.3, 0.6);
+  accToSpeed = new AccToSpeed(0.5, 0.5);
+  accToSpeed->init(measuredData.axCalibrated, measuredData.ayCalibrated, measuredData.azCalibrated);
 
   sonarSensor = new SonarSensor(gndPin, echoPin, trigPin, vccPin, maxDistance, minDistance);
   sonarSensor->init();
@@ -90,20 +95,19 @@ void loop() {
   accSensor->measure();
   measuredData = accSensor->getMeasurements();
 
-  // Measure distance
-  //sonarSensor->measure();
-
-  // Workcounter calc from distance. Calculated in interrupt protected atomic
+  // Interrupt protected atomic
   // block so that interrupt cannot change filteredDistance while measure is called.
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
+    // Measure distance. Inside atomic block because a lot of noise occurred because of interrupt happening in middle of sound pulse measuring.
+    sonarSensor->measure();
+
     distance = sonarSensor->getMeasurement();
     if (firstProgramCycle) filterDistance->setOutput(distance);
-    workCounter->measure(filteredDistance / 100.0);
-    minVelocity = accToSpeed->getOutputMin() * 10.0;
-    maxVelocity = accToSpeed->getOutputMax() * 10.0;
+    if (workCounterMode == 0){workCounter->measure(filteredDistance / 100.0, 0);}
+    if (workCounterMode == 1){workCounter->measure(accToSpeed->getOutput(), 1);} 
   }
-
+  
   printSerialPlotter();
   //printSerialMonitor();
 
@@ -114,17 +118,13 @@ void loop() {
 
 void printSerialPlotter()
 {
-  //Serial.print("distance[cm]:");
-  //Serial.print(filteredDistance); Serial.print(" ");
   //sonarSensor->printData();
+  //Serial.print("Filt_distance[cm]:");
+  //Serial.print(filteredDistance); Serial.print(" ");
   //accSensor->printData();
-//  Serial.print("minV[m/s]:");
-//  Serial.print(minVelocity); Serial.print(" ");
-//  Serial.print("maxV[m/s]:");
-//  Serial.print(maxVelocity); Serial.print(" ");
   //accToSpeed->printAccData();
   accToSpeed->printVelocityData();
-  //workCounter->printData();
+  workCounter->printData();
   Serial.println();
 }
 

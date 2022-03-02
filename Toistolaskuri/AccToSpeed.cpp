@@ -55,25 +55,29 @@ void AccToSpeed::setInput(float ax, float ay, float az, float inputInterval)
   _vxOut = _vx - _vxAvg;
   _vyOut = _vy - _vyAvg;
   _vzOut = _vz - _vzAvg;
+  _vxyzOut = sqrt(_vxOut * _vxOut + _vyOut * _vyOut + _vzOut * _vzOut);
 }
 
-float AccToSpeed::getOutputMax()
+void AccToSpeed::init(float ax, float ay, float az)
 {
-  return max(_vxOut, max(_vyOut, _vzOut));
+  _axFilter->setOutput(ax);
+  _ayFilter->setOutput(ay);
+  _azFilter->setOutput(az);
 }
 
-float AccToSpeed::getOutputMin()
+float AccToSpeed::getOutput()
 {
-  return min(_vxOut, min(_vyOut, _vzOut));
+  return _vxyzOut;
 }
+
 
 void AccToSpeed::printAccData()
 {
-  Serial.print("ax[m/s^2]:");
-  Serial.print(_ax); Serial.print(" ");
-    Serial.print("axAvg[m/s^2]:");
-  Serial.print(_axAvg); Serial.print(" ");
-    Serial.print("axOut[m/s^2]:");
+//  Serial.print("ax[m/s^2]:");
+//  Serial.print(_ax); Serial.print(" ");
+//  Serial.print("axAvg[m/s^2]:");
+//  Serial.print(_axAvg); Serial.print(" ");
+  Serial.print("axOut[m/s^2]:");
   Serial.print(_axOut); Serial.print(" ");
   //  Serial.print("ayOut[m/s^2]:");
   //  Serial.print(_ayOut); Serial.print(" ");
@@ -83,12 +87,12 @@ void AccToSpeed::printAccData()
 
 void AccToSpeed::printVelocityData()
 {
-  Serial.print("vx[m/s^2]:");
-  Serial.print(_vx*10); Serial.print(" ");
-  Serial.print("vxAvg[m/s^2]:");
-  Serial.print(_vxAvg*10); Serial.print(" ");
-  Serial.print("vxOut[m/s^2]:");
-  Serial.print(_vxOut*10); Serial.print(" ");
+//  Serial.print("vx[m/s^2]:");
+//  Serial.print(_vx); Serial.print(" ");
+//  Serial.print("vxAvg[m/s^2]:");
+//  Serial.print(_vxAvg * 10); Serial.print(" ");
+  Serial.print("vxyzOut[m/s^2]:");
+  Serial.print(_vxyzOut); Serial.print(" ");
   //  Serial.print("vyOut[m/s^2]:");
   //  Serial.print(_vyOut); Serial.print(" ");
   //  Serial.print("vzOut[m/s^2]:");

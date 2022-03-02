@@ -13,6 +13,9 @@ class WorkCounter {
     float _prevDistance = 0;
     float _highLimit = 0;
     float _lowLimit = 0;
+    float _highVelocityLimit = 0;
+    float _lowVelocityLimit = 0;
+    int _velocityRepetition = 0;
     float _mass = 0;
     float _gravity = 0;
     float _downMotionCoef = 0;
@@ -21,18 +24,13 @@ class WorkCounter {
     bool _upState = false;
     unsigned long _prevTime = 0;
   public:
-    WorkCounter(float highLimit, float lowLimit, float mass, float gravity, float downMotionCoef);
+    WorkCounter(float highLimit, float lowLimit, float mass, float gravity, float downMotionCoef, float highVelocityLimit, float lowVelocityLimit);
     /**
        Measure work counts
-       @param distance  distance from sensor in cm
+       @param paramValue  distance in cm or speed in m/s
+       @param mode        0 = distance mode, 1 = velocity mode
     */
-    void measure(float distance);
-
-    /**
-           Measure work counts
-           @param velocity  velocity in m/s
-    */
-    void measure(float velocity, bool dummy);
+    void measure(float paramValue, int mode);
 
     /**
        Get work counter current value

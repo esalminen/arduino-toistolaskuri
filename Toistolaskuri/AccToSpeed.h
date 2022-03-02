@@ -37,11 +37,12 @@ class AccToSpeed {
     float _vxOut = 0;
     float _vyOut = 0;
     float _vzOut = 0;
+    float _vxyzOut = 0;
   public:
     AccToSpeed(float aFreq, float vfreq);
+    void init(float ax, float ay, float az);
     void setInput(float ax, float ay, float az, float inputInterval);
-    float getOutputMax();
-    float getOutputMin();
+    float getOutput();
     void printAccData();
     void printVelocityData();
 };

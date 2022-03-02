@@ -26,7 +26,7 @@ void SonarSensor::init()
   pinMode(_echoPin, INPUT);
   pinMode(_trigPin, OUTPUT);
   pinMode(_vccPin, OUTPUT);
-  
+
   // Set supplyvoltage levels
   digitalWrite(_vccPin, HIGH);
   delayMicroseconds(2);
@@ -42,7 +42,8 @@ void SonarSensor::measure()
   delayMicroseconds(10);
   digitalWrite(_trigPin, LOW);
 
-  unsigned long duration = pulseIn(_echoPin, HIGH); // Sound travelling time back and forth in µs. Sound travels approx 0.034 cm in µs
+  // Sound travelling time back and forth in µs. Sound travels approx 0.034 cm in µs. Set timeout for 1.5 times maxdistance.
+  unsigned long duration = pulseIn(_echoPin, HIGH, (unsigned long)((_maxDistance / 0.034) * 2 * 1.5));
   _distance = duration * 0.034 / 2.0; // Divide with 2.0 because duration includes travelling to and from target
   if (_distance >= _maxDistance || _distance <= _minDistance) _distance = -1.0; // Set distance to -1.0 if measurement fails
 }
@@ -54,5 +55,6 @@ float SonarSensor::getMeasurement()
 
 void SonarSensor::printData()
 {
-  
+  Serial.print("distance[cm]:");
+  Serial.print(_distance); Serial.print(" ");
 }
