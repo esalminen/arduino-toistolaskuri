@@ -100,12 +100,12 @@ void loop() {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
     // Measure distance. Inside atomic block because a lot of noise occurred because of interrupt happening in middle of sound pulse measuring.
-    sonarSensor->measure();
+    //sonarSensor->measure();
 
-    distance = sonarSensor->getMeasurement();
+    //distance = sonarSensor->getMeasurement();
     if (firstProgramCycle) filterDistance->setOutput(distance);
-    if (workCounterMode == 0){workCounter->measure(filteredDistance / 100.0, 0);}
-    if (workCounterMode == 1){workCounter->measure(accToSpeed->getOutput(), 1);} 
+    if (workCounterMode == 0)workCounter->measure(filteredDistance / 100.0, 0);
+    if (workCounterMode == 1)workCounter->measure(accToSpeed->getOutput(), 1); 
   }
   
   printSerialPlotter();

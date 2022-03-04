@@ -22,6 +22,7 @@ class WorkCounter {
     float _energyCounter = 0;
     int _workCounter = 0;
     bool _upState = false;
+    bool _motionActive = false;
     unsigned long _prevTime = 0;
   public:
     WorkCounter(float highLimit, float lowLimit, float mass, float gravity, float downMotionCoef, float highVelocityLimit, float lowVelocityLimit);

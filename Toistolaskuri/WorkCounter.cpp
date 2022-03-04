@@ -58,13 +58,13 @@ void WorkCounter::measure(float paramValue, int mode)
   }
   else if (mode == 1)
   { // velocity mode
-    if (!_upState && (paramValue) >= _highVelocityLimit) {
+    if (!_motionActive && (paramValue) >= _highVelocityLimit) {
       _velocityRepetition++;
-      _upState = true;
+      _motionActive = true;
     }
 
-    if (_upState && (paramValue) <= _lowVelocityLimit) {
-      _upState = false;
+    if (_motionActive && (paramValue) <= _lowVelocityLimit) {
+      _motionActive = false;
     }
     _workCounter = _velocityRepetition / 2;
   }
@@ -84,10 +84,10 @@ void WorkCounter::printData()
 {
   Serial.print("workCounter[cycles]:");
   Serial.print(_workCounter); Serial.print(" ");
-  Serial.print("energyCounter[J]:");
-  Serial.print(_energyCounter); Serial.print(" ");
-  Serial.print("upState:");
-  Serial.print(_upState * 10); Serial.print(" ");
-  Serial.print("velRep[kpl]:");
-  Serial.print(_velocityRepetition); Serial.print(" ");
+//  Serial.print("energyCounter[J]:");
+//  Serial.print(_energyCounter); Serial.print(" ");
+  Serial.print("motionActive:");
+  Serial.print(_motionActive * 3); Serial.print(" ");
+//  Serial.print("velRep[kpl]:");
+//  Serial.print(_velocityRepetition); Serial.print(" ");
 }

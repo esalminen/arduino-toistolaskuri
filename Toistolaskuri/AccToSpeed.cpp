@@ -73,28 +73,23 @@ float AccToSpeed::getOutput()
 
 void AccToSpeed::printAccData()
 {
-//  Serial.print("ax[m/s^2]:");
-//  Serial.print(_ax); Serial.print(" ");
-//  Serial.print("axAvg[m/s^2]:");
-//  Serial.print(_axAvg); Serial.print(" ");
+
   Serial.print("axOut[m/s^2]:");
   Serial.print(_axOut); Serial.print(" ");
-  //  Serial.print("ayOut[m/s^2]:");
-  //  Serial.print(_ayOut); Serial.print(" ");
-  //  Serial.print("azOut[m/s^2]:");
-  //  Serial.print(_azOut); Serial.print(" ");
+  Serial.print("ayOut[m/s^2]:");
+  Serial.print(_ayOut); Serial.print(" ");
+  Serial.print("azOut[m/s^2]:");
+  Serial.print(_azOut); Serial.print(" ");
 }
 
 void AccToSpeed::printVelocityData()
 {
-//  Serial.print("vx[m/s^2]:");
-//  Serial.print(_vx); Serial.print(" ");
-//  Serial.print("vxAvg[m/s^2]:");
-//  Serial.print(_vxAvg * 10); Serial.print(" ");
+//  Serial.print("vxOut[m/s^2]:");
+//  Serial.print(_vxOut); Serial.print(" ");
+//  Serial.print("vyOut[m/s^2]:");
+//  Serial.print(_vyOut); Serial.print(" ");
+//  Serial.print("vzOut[m/s^2]:");
+//  Serial.print(_vzOut); Serial.print(" ");
   Serial.print("vxyzOut[m/s^2]:");
   Serial.print(_vxyzOut); Serial.print(" ");
-  //  Serial.print("vyOut[m/s^2]:");
-  //  Serial.print(_vyOut); Serial.print(" ");
-  //  Serial.print("vzOut[m/s^2]:");
-  //  Serial.print(_vzOut); Serial.print(" ");
 }
